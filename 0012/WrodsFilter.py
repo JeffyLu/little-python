@@ -9,8 +9,7 @@ def main():
         filter_word = f.read().strip().split('\n')
         for word in filter_word:
             if word in filter_word:
-                replace = ['*' for i in range(len(word))]
-                text = text.replace(word, ''.join(replace))
+                text = text.replace(word, '*'*len(word))
         print('output text:' + text)
 
 if __name__ == '__main__':
