@@ -17,5 +17,5 @@
 **[代码：HouseObserver.py](HouseObserver.py)**
 
 * * *
-**更多具体模式的介绍：[设计模式@JeffyLu](https://github.com/JeffyLu/JeffyLu.github.io/labels/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F)**     
+**更多具体模式的介绍：[设计模式@JeffyLu](https://github.com/JeffyLu/JeffyLu.github.io/issues?q=is%3Aopen+is%3Aissue+label%3A%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F)**     
 **更多python版的设计模式：[python-patterns@faif](https://github.com/faif/python-patterns)**    
