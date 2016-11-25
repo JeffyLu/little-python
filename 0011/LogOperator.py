@@ -6,83 +6,83 @@ from struct import pack, unpack
 import datetime
 
 class Operate():
-    """日志操作"""
+    """日志操作类"""
 
-    __count = 0
-    #构造函数
+    _filename = ''
+    _count = 0
+    _logs = []
+
+    #载入日志
     def __init__(self, filename):
-        self.__filename = filename
-        with open(self.__filename, 'rb') as f:
+        self._filename = filename
+        self._load()
 
-            #读取4个字节为日志数目
-            self.__count = unpack('i', f.read(4))[0]
+    def _pack_byte(self, log):
+        """字节流打包"""
 
-    #读取日志
-    def read(self):
-        print('共有%d条日志.' % self.__count)
-        l, r = self.__input_index('输入查询区间, 如:10 20\n')
-        print('查询区间为%d-%d.' % (l, r))
+        btype = pack('i', log['type'])
+        buser = pack('i', log['user']['length'])
+        buser += log['user']['user'].encode('gbk')
+        bdate = pack('i', log['date']['length'])
+        bdate += log['date']['date'].encode('gbk')
+        btext = pack('i', log['text']['length'])
+        btext += log['text']['text'].encode('gbk')
+        return btype + buser + bdate + btext
 
-        with open(self.__filename, 'rb') as f:
+    def _unpack_byte(self, t, f, length = 0):
+        """字节流解包"""
 
-            #以换行符'\r'拆分所有日志包括首行日志数目
-            lines = f.read().split(b'\r')
-            i = l
+        #4个字节解析为int型整数
+        if t == 'int':
+            return unpack('i', f.read(4))[0]
 
-            #读取区间内的日志
-            for line in lines[l:r+1]:
-                types = unpack('i', line[:4])[0]
-                elses = line[4:].decode('gbk')
-                print(str(i), types, elses)
-                i += 1
+        #length长度字符串解码('gbk')
+        elif t == 'string':
+            return unpack('%ds' % length, f.read(length))[0].decode('gbk')
+        else:
+            return None
 
-    #删除日志
-    def delete(self):
-        l, r = self.__input_index('输入删除区间, 如:10 20\n')
-        confirm = input('是否删除日志%d-%d\n确认(y), 任意键取消.\n' % (l, r))
-        if confirm != 'y':
-            return
-        self.__backup(2, index = (l, r))
+    def _load(self):
+        """载入日志"""
 
-    #增加日志
-    def add(self):
+        with open(self._filename, 'rb') as f:
 
-        #假设操作类型为1,用户为administrator
-        types = 1
-        user = 'Administrator'.encode('gbk')
-        time = datetime.datetime.now().strftime(' %Y-%m-%d, %H:%M ').encode('gbk')
-        item = input('输入操作内容:').encode('gbk')
+            #读取记录总数
+            self._count = self._unpack_byte('int', f)
 
-        #转为二进制数据：4个字节int型操作类型，16个字节用户名
-        #19个字节日期包括三个空格，任意长度操作内容
-        log = pack('i16s19s%ds'%len(item), types, user, time, item) + b'\r'
-        self.__backup(1, log = log)
+            #按格式解析并保存所有记录
+            for i in range(self._count):
 
-    #修改日志
-    def change(self):
-        try:
-            index = int(input('输入待修改日志序号, 如:10\n'))
-            while index < 1 or index > self.__count:
-                index = int(input('输入无效, 请重新输入:'))
-        except:
-            print('输入错误!')
-            return
+                #单条记录格式
+                log = {'type':'', 'user':{}, 'date':{}, 'text':{}}
+                #类型
+                log['type'] = self._unpack_byte('int', f)
+                #用户名以及长度
+                log['user']['length'] = self._unpack_byte('int', f)
+                log['user']['user'] = self._unpack_byte(
+                    'string',
+                    f,
+                    log['user']['length']
+                )
+                #日期以及长度
+                log['date']['length'] = self._unpack_byte('int', f)
+                log['date']['date'] = self._unpack_byte(
+                    'string',
+                    f,
+                    log['date']['length']
+                )
+                #内容信息以及长度
+                log['text']['length'] = self._unpack_byte('int', f)
+                log['text']['text'] = self._unpack_byte(
+                    'string',
+                    f,
+                    log['text']['length']
+                )
+                self._logs.append(log)
 
-        #假设只修改操作内容
-        item = input('修改操作内容为:').encode('gbk')
-        log = pack('%ds'%len(item), item) + b'\r'
-        self.__backup(3, index = (index,), log = log)
+    def _input_index(self, string, mflag = False):
+        """输入区间"""
 
-    #移动日志
-    def move(self):
-        index = self.__input_index(
-            '输入待移动日志位置和目标位置, 如:10 20\n',
-            mflag = True
-        )
-        self.__backup(4, index = index)
-
-    #输入区间，移动操作时左右区间为原始位置和目标位置
-    def __input_index(self, string, mflag = False):
         index = str(input(string))
         while(not re.match(r'[1-9]+\d* [1-9]+\d*', index)):
             index = input('输入无效, 请重新输入:')
@@ -94,149 +94,153 @@ class Operate():
 
         #左右区间排序
         index.sort()
-        l = index[0] if index[0] <= self.__count else self.__count
-        r = index[1] if index[1] <= self.__count else self.__count
+        l = index[0] if index[0] <= self._count else self._count
+        r = index[1] if index[1] <= self._count else self._count
         return l, r
 
-    #通过备份操作日志：1-增加，2-删除，3-修改，4-移动
-    def __backup(self, flag, index = (), log = ''):
+    def _get_log(self, index):
+        """按下标取出记录"""
 
-        #源文件f，新文件nf（二进制读写）
-        with open(self.__filename, 'rb') as f:
-            with open('tempfile', 'wb+') as nf:
+        log = self._logs[index]
+        #格式化
+        format_log = str.format("%d %s%s %s" % (
+            log['type'],
+            log['user']['user'],
+            log['date']['date'],
+            log['text']['text'],
+        ))
+        return format_log
 
-                #增加
-                if flag == 1:
-                    self.__count += 1
+    def read(self):
+        """读取日志"""
 
-                    #修改首行日志数目
-                    nf.write(pack('i', self.__count) + b'\r')
+        print('共有%d条记录.' % self._count)
+        l, r = self._input_index('输入查询区间, 如:10 20\n')
+        print('查询区间为%d-%d.' % (l, r))
+        for i in range(l-1, r):
+            print(i+1, self._get_log(i))
 
-                    #拷贝源文件第6个字节至结束(首行4个字节+1个字节换行)
-                    nf.write(f.read()[5:])
+    def delete(self):
+        """删除日志"""
 
-                    #追加新条目
-                    nf.write(log)
-                    print(
-                        '成功增加日志:%d %s' % (
-                            unpack('i', log[:4])[0],
-                            log[4:].decode('gbk')
-                        )
-                    )
+        l, r = self._input_index('输入删除区间, 如:10 20\n')
+        confirm = input('是否删除记录%d-%d\n确认(y),任意键取消.\n' % (l, r))
+        if confirm != 'y':
+            print('已放弃删除!')
+            return
 
-                #删除
-                elif flag == 2:
-                    self.__count -= index[1] - index[0] + 1
+        for i in range(r-l+1):
+            print('成功删除:', l+i, self._get_log(l-1))
+            self._logs.pop(l-1)
+            self._count -= 1
 
-                    #首行
-                    nf.write(pack('i', self.__count) + b'\r')
+        self._save()
 
-                    #读取全文并拆分
-                    lines = list(f.read().strip(b'\r').split(b'\r'))
-                    i = 0
-                    for line in lines[1:]:
-                        i += 1
+    def add(self):
+        """添加日志"""
 
-                        #区间内的日志不写入新文件
-                        if i >= index[0] and i <= index[1]:
-                            print(
-                                '成功删除日志:%d %s' % (
-                                    unpack('i', line[:4])[0],
-                                    line[4:].decode('gbk')
-                                )
-                            )
-                            continue
-                        nf.write(line + b'\r')
+        log = {'type':'', 'user':{}, 'date':{}, 'text':{}}
 
-                #修改
-                elif flag == 3:
-                    lines = list(f.read().strip(b'\r').split(b'\r'))
-                    i = 0
-                    for line in lines:
-                        i += 1
-                        if i == index[0]+1:
-                            print(
-                                '成功修改\n%d %s\n为\n%d %s%s' % (
-                                    unpack('i', line[:4])[0],
-                                    line[4:].decode('gbk'),
-                                    unpack('i', line[:4])[0],
-                                    line[4:39].decode('gbk'),
-                                    log.decode('gbk')
-                                )
-                            )
+        #输入新记录
+        while(True):
+            try:
+                log['type'] = int(input('输入记录类型:'))
+                break
+            except:
+                print('输入无效, 请输入一个整数!')
 
-                            #前39个字节不变，只修改操作记录
-                            nf.write(line[:39] + log)
-                            continue
-                        nf.write(line + b'\r')
+        log['user']['user'] = input('输入用户名:')
+        log['date']['date'] = datetime.datetime.now().strftime(' %Y-%m-%d, %H:%M')
+        log['text']['text'] = input('输入记录信息:')
 
-                #移动:原位置index[0]，目标位置index[1]
-                elif flag == 4:
-                    lines = list(f.read().strip(b'\r').split(b'\r'))
-                    i = 0
-                    for line in lines:
-                        i += 1
+        #计算长度
+        log['user']['length'] = len(log['user']['user'].encode('gbk'))
+        log['date']['length'] = len(log['date']['date'].encode('gbk'))
+        log['text']['length'] = len(log['text']['text'].encode('gbk'))
 
-                        #目标位置写入待移动日志和此位置原有的日志
-                        if i == index[1]+1:
+        #添加并保存
+        self._logs.append(log)
+        self._count += 1
+        print('成功添加:', self._count, self._get_log(self._count-1))
+        self._save()
 
-                            #日志下移先原有日志再写待移动日志
-                            if index[0] < index[1]:
-                                nf.write(line + b'\r')
-                                nf.write(lines[index[0]] + b'\r')
-                                continue
-                            nf.write(lines[index[0]] + b'\r')
+    def change(self):
+        """修改日志"""
 
-                        #原位置跳过
-                        if i == index[0]+1:
-                            continue
-                        nf.write(line + b'\r')
+        #取出带修改记录
+        while True:
+            try:
+                index = int(input('输入待修改记录序号, 如:10\n'))
+                if index < 1 or index > self._count:
+                    raise
+                break
+            except:
+                print('输入无效, 请输入1-%d内的整数!' % self._count)
+        print('待修改的记录:', index, self._get_log(index-1))
+        log = self._logs[index-1]
 
-                    print(
-                        '成功移动第%d条日志\n%d %s\n至%d行' % (
-                            index[0],
-                            unpack('i', lines[index[0]][:4])[0],
-                            lines[index[0]][4:].decode('gbk'),
-                            index[1]
-                        )
-                    )
-
+        #输入修改数据
+        while True:
+            temp_type = input('输入新类型(回车跳过):')
+            try:
+                if temp_type:
+                    temp_type = int(temp_type)
                 else:
-                    return
+                    temp_type = log['type']
+                break
+            except:
+                print('输入无效, 请输入一个整数!')
+        temp_user = input('输入新用户(回车跳过):')
+        if not temp_user:
+            temp_user = log['user']['user']
+        temp_date = datetime.datetime.now().strftime(' %Y-%m-%d, %H:%M')
+        temp_text = input('输入新记录信息(回车跳过):')
+        if not temp_text:
+            temp_text = log['text']['text']
 
-        #备份
-        os.rename(self.__filename, self.__filename + '.bak')
-        os.rename('tempfile', self.__filename)
+        #修改并保存
+        print('修改后的记录: %d %d %s%s %s' % (
+            index, temp_type, temp_user, temp_date, temp_text))
+        confirm = input('是否修改该记录?\n确认(y),任意键取消.\n')
+        if confirm != 'y':
+            print('已取消修改!')
+            return
 
-def rewrite_log():
-    '''
-    格式化日志
-    '''
-    #2进制读取并以换行符'\r'拆分日志为list
-    with open('chrom2000.log', 'rb') as f:
-        lines = f.read().split(b'\r')
-        lineone = unpack('ii', lines[0])
-        print(lineone[0], lineone[1])
-        for i in range(1, 10):
-            print(lines[i].decode('gbk'), unpack('i', lines[i][-4:])[0])
+        log['type'] = temp_type
+        log['user']['user'] = temp_user
+        log['user']['length'] = len(temp_user.encode('gbk'))
+        log['date']['date'] = temp_date
+        log['date']['length'] = len(temp_date.encode('gbk'))
+        log['text']['text'] = temp_text
+        log['text']['length'] = len(temp_text.encode('gbk'))
+        self._logs[index-1] = log
+        print('修改成功!')
+        self._save()
 
-        #读取首行前四个字节转为十进制int型-1为日志数目
-        #读取上一行的后4个字节作为本行的操作类型
-        #读取每行前16个字节为用户名
-        #第20至38字节为日期包括两个空格
-        #第42至末尾为操作记录
-        #写入新日志文件new.log
-        with open('new.log', 'wb+') as newfile:
-            line1 = unpack('i', lines[0][:4])[0]
-            types = lines[0][4:]
-            newfile.write(pack('i', line1-1) + b'\r')
-            for line in lines[1:]:
-                user = line[:16].strip(b'\x00')
-                user = pack('16s', user)
-                date = line[20:38]
-                item = line[42:-4]
-                newfile.write(types+user+date+b' '+item+b'\r')
-                types = line[-4:]
+    def move(self):
+        """移动日志"""
+
+        current_position, target_position = self._input_index(
+            '输入待移动日志位置和目标位置, 如:10 20\n',
+            mflag = True
+        )
+
+        #移动并保存
+        print('成功移动\n%d %s' % (
+            current_position, self._get_log(current_position-1)))
+        log = self._logs.pop(current_position-1)
+        self._logs.insert(target_position-1, log)
+        print('至\n%d %s' % (
+            target_position, self._get_log(target_position-1)))
+        self._save()
+
+    def _save(self):
+        """保存文件"""
+
+        with open('chrom2000.log', 'wb') as f:
+            f.write(pack('i', self._count))
+            for log in self._logs:
+                f.write(self._pack_byte(log))
 
 def main():
     """操作日志文件
@@ -251,11 +255,9 @@ def main():
 
     学号:105032014029    姓名:卢键辉
     """
-    #重写日志
-    rewrite_log()
 
     #创建对象
-    FILE_NAME = 'new.log'
+    FILE_NAME = 'chrom2000.log'
     log = Operate(FILE_NAME)
 
     #主程序
