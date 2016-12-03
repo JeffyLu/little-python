@@ -26,10 +26,11 @@ def change_item_status(request):
 @login_required
 def add_item(request):
     item = request.POST['item']
-    Mylist.objects.create(
-        user = request.user,
-        item = item,
-    )
+    if item:
+        Mylist.objects.create(
+            user = request.user,
+            item = item,
+        )
     return HttpResponseRedirect('/')
 
 
@@ -37,7 +38,7 @@ def add_item(request):
 def view_of_item_list(request):
     if request.method == 'POST':
         #return HttpResponse(request.POST)
-        if 'ok' in request.POST:
+        if 'ok' in request.POST and 'choice' in request.POST:
             #return HttpResponse(request.POST)
             return change_item_status(request)
         if 'add' in request.POST:
