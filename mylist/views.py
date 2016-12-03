@@ -29,7 +29,7 @@ def add_item(request):
     if item:
         Mylist.objects.create(
             user = request.user,
-            item = item,
+            item = item[:200],
         )
     return HttpResponseRedirect('/')
 
