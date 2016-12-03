@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}TodoList{% endblock %}
+
+{% block body %}
+{% if items %}
+<div>
+<table style="width:100%;">
+  <thead style="font-size:1.2em; font-weight:600">
+    <tr style="text-align:center;">
+      <th style="text-align:left; width:70%;">Item</th>
+      <th style="width:10%;">Done</th>
+      <th style="width:10%;">Remove</th>
+      <th style="width:10%;">Option</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for item in items %}
+    <tr>
+      <td>{{ item.item }}</td>
+      <form method="post">
+        {% csrf_token %}
+          <input type="hidden" name="item_id" value="{{ item.id }}">
+        <td style="text-align:center;">
+          <input type="radio" name="choice" value="done" required />
+        </td>
+        <td style="text-align:center;">
+          <input type="radio" name="choice" value="remove" required />
+        </td>
+        <td style="text-align:center;">
+          <input type="submit" title="choose your option." name="ok" value="OK" />
+        </td>
+      </form>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+
+{% if done_items %}
+<div>
+<h2 style="margin-top:60px;">Done</h2>
+<table style="width:100%;">
+  <thead style="font-size:1.2em; font-weight:600">
+    <tr style="text-align:center;">
+      <th style="text-align:left; width:70%;">Item</th>
+      <th style="width:10%;">Redo</th>
+      <th style="width:10%;">Remove</th>
+      <th style="width:10%;">Option</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for item in done_items %}
+    <tr>
+      <td>{{ item.item }}</td>
+      <form method="post">
+        {% csrf_token %}
+          <input type="hidden" name="item_id" value="{{ item.id }}">
+        <td style="text-align:center;">
+          <input type="radio" name="choice" value="redo" required />
+        </td>
+        <td style="text-align:center;">
+          <input type="radio" name="choice" value="remove" required />
+        </td>
+        <td style="text-align:center;">
+          <input type="submit" title="choose your option." name="ok" value="OK" />
+        </td>
+      </form>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+
+{% endblock%}
+
