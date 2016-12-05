@@ -80,5 +80,5 @@ $python manage.py runserver --nothreading
 若发现bug请在issue中提出，欢迎参与维护。    
 联系方式:    
 - QQ:367188060
-- 邮箱:JeffyLu@gmail.com
+- 邮箱:JeffyLuuu@gmail.com
 - 个人主页:[Jeffy's Personal Page](https://jeffylu.github.io)
