@@ -32,7 +32,7 @@ class Youdao():
     def get_data(self):
         data = urlopen(self.url, self.postdata).read()
         data = json.loads(data.decode('utf-8'))
-        #print(data)
+        print(data)
         if data['errorCode']:
             print('error!')
             return
