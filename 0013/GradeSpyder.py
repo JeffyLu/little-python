@@ -5,15 +5,18 @@ import urllib.parse
 import re
 import http.cookiejar
 
+#url
 url = "http://jwgl.xxxx.edu.cn/"
 login_url = url + "default2.aspx"
 chkcode_url = url + "CheckCode.aspx"
 grade_url = url + "xscjcx_dq.aspx?"
 
+#cookie
 cj = http.cookiejar.CookieJar()
 pro = urllib.request.HTTPCookieProcessor(cj)
 opener = urllib.request.build_opener(pro)
 urllib.request.install_opener(opener)
+
 
 class GradeSpyder:
 
@@ -27,7 +30,7 @@ class GradeSpyder:
     def __get_viewstate(self, content):
 
         viewstate = re.findall(r'''name="__VIEWSTATE" value="(.*?)"''', content)
-        print(viewstate)
+        #print(viewstate)
         return viewstate[0]
 
     @property
@@ -39,11 +42,11 @@ class GradeSpyder:
         check_code = input("输入验证码:")
         for c in cj:
             self.__cookie = c.name + "=" + c.value
-        print(self.__cookie)
+        #print(self.__cookie)
         return check_code
 
     @property
-    def __get_post_data(self):
+    def __get_login_post_data(self):
 
         response = urllib.request.urlopen(login_url)
         content = response.read().decode('gbk')
@@ -68,6 +71,36 @@ class GradeSpyder:
         return urllib.parse.urlencode(post_data).encode()
 
     @property
+    def __get_grade_post_data_and_url(self):
+
+        data = {
+            'xh' : self.__stuid,
+            'xm' : self.__name,
+            'gnmkdm' : 'N121617',
+        }
+        url = grade_url + urllib.parse.urlencode(data)
+
+        request = urllib.request.Request(
+            url,
+            None,
+            self.__get_headers,
+        )
+        response = urllib.request.urlopen(request)
+        content = response.read().decode('gbk')
+        #print(url)
+
+        data = {
+            '__EVENTTARGET' : '',
+            '__EVENTARGUMENT' : '',
+            '__VIEWSTATE' : self.__get_viewstate(content),
+            'ddlxn' : input('输入学年, 如(2016-2017):'),
+            'ddlxq' : input('输入学期, 如(1):'),
+            'btnCx' : ' 查  询 ',
+        }
+
+        return (urllib.parse.urlencode(data).encode(), url)
+
+    @property
     def __get_headers(self):
 
         headers = {
@@ -75,10 +108,10 @@ class GradeSpyder:
             "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
             "User-Agent" :
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML,like Gecko) Chrome/53.0.2785.116 Safari/537.36",
-            "Referer " : "http://jwgl.fjnu.edu.cn/xs_main.aspx?xh=" + self.__stuid,
+            "Referer" : "http://jwgl.xxxx.edu.cn/xs_main.aspx?xh=" + self.__stuid,
             "Connection" : "keep-alive",
             "Cookie" : self.__cookie,
-            "Host" : "jwgl.fjnu.edu.cn",
+            "Host" : "jwgl.xxxx.edu.cn",
         }
 
         return headers
@@ -88,7 +121,7 @@ class GradeSpyder:
         try:
             request = urllib.request.Request(
                 login_url,
-                self.__get_post_data,
+                self.__get_login_post_data,
                 self.__get_headers,
             )
             response = urllib.request.urlopen(request)
@@ -105,7 +138,6 @@ class GradeSpyder:
             name = re.findall(r'''<span id="xhxm">(.*?)同学''', content)
             self.__name = name[0]
             print('登录成功!')
-            print('欢迎{}, {}同学:'.format(self.__stuid, self.__name))
             return True
         else:
             print('登录失败!')
@@ -113,7 +145,46 @@ class GradeSpyder:
         return False
 
     def get_grade(self):
-        pass
+
+        data, url = self.__get_grade_post_data_and_url
+        try:
+            request = urllib.request.Request(
+                url,
+                data,
+                self.__get_headers,
+            )
+            response = urllib.request.urlopen(request)
+            content = response.read().decode('gbk')
+            self.__analyze_info(content)
+        except urllib.request.HTTPError:
+            print('http error!')
+            return False
+
+
+    def __analyze_info(self, content):
+
+        content = content.replace('&nbsp;', '-')
+        title = re.findall(r'<td colspan="3".*>(.*?)</td>', content)
+        department = re.findall(r'<td>(学院.*?)</td>', content)
+        _class = re.findall(r'<td>(行政班.*?)</td>', content)
+        major = re.findall(r'<td colspan="2">(专业.*?)</td>', content)
+        grade_pattern = '<td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td>'
+        grade = re.findall(grade_pattern, content)
+        print(department[0])
+        print(_class[0])
+        print('学号:'+self.__stuid)
+        print('姓名:'+self.__name)
+        print('\n' + '*-'*20 + title[0] + '-*'*20 + '\n')
+        for l in grade:
+            print('%-22s\t%-8s\t%-8s\t%-8s\t%-8s\t%-8s' %
+                  (l[3][:9], l[6], l[7], l[8], l[9], l[10])
+                 )
+        o = input('\n*输入“f”查看完整信息:\n')
+        if o == 'f':
+            for l in grade:
+                for i in l:
+                    print(i + ' ', end='')
+                print()
 
 if __name__ == '__main__':
 
