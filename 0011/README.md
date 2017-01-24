@@ -33,5 +33,4 @@
 
 * * *
 
-*** java版实现.[Log.java](https://github.com/JeffyLu/Java/tree/master/0004)***
-*** 个人主页[JeffyLu](https://jeffylu.github.io/).***
+*** java版 : [Log.java](https://github.com/JeffyLu/Java/tree/master/0004)***
