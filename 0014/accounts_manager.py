@@ -1,18 +1,32 @@
 #coding:utf-8
 
-from string import printable as CHAR_TABLE
+from string import printable
 import pickle
 import os
 import base64
 
 
 DATA = {}
+CHAR_TABLE = printable
 data_name = 'DATA.dat'
 skip_null = lambda new, old : new if new else old
 bs_encode = lambda string : base64.encodestring(string.encode()).decode()
 bs_decode = lambda string : base64.decodestring(string.encode()).decode()
 encryption_match = lambda arg, func : [CHAR_TABLE.index(i) for i in func(arg)]
 decryption_match = lambda arg, func : func("".join([CHAR_TABLE[i] for i in arg]))
+
+def shuffle():
+    global CHAR_TABLE
+    try:
+        security_code = [CHAR_TABLE.index(i)/100 for i in input("security code:")]
+    except:
+        return False
+    CHAR_TABLE = list(CHAR_TABLE)
+    for i in reversed(range(1, len(CHAR_TABLE))):
+        for pos in security_code:
+            j = int((i+1) * pos)
+            CHAR_TABLE[i], CHAR_TABLE[j] = CHAR_TABLE[j], CHAR_TABLE[i]
+    CHAR_TABLE = ''.join(CHAR_TABLE)
 
 def load_data():
     global DATA
@@ -35,7 +49,6 @@ def print_data(account, data):
     print("{0}\n{1}:\n\t{2[0]}\n\t{2[1]}\n\t{2[2]}\n{0}".format(
         '*'*60, account, data))
 
-
 def encryption(*args):
     try:
         return pickle.dumps([encryption_match(i, bs_encode) for i in args])
@@ -46,7 +59,6 @@ def encryption(*args):
         print("faild!")
         return False
 
-
 def decryption(account):
     try:
         return [decryption_match(i, bs_decode) for i in pickle.loads(account)]
@@ -56,7 +68,6 @@ def decryption(account):
     except:
         print("faild!")
         return False
-
 
 def add():
     global DATA
@@ -75,7 +86,6 @@ def add():
             DATA[account] = data
             print("successfully added!")
 
-
 def delete():
     global DATA
     account = input("account:")
@@ -90,7 +100,6 @@ def delete():
             print("successfully deleted!")
     else:
         print("account does not exist!")
-
 
 def change():
     global DATA
@@ -114,7 +123,6 @@ def change():
     else:
         print("account does not exist!")
 
-
 def search():
     account = input("account:")
     if account == '*':
@@ -132,6 +140,7 @@ def search():
 
 if __name__ == '__main__':
 
+    shuffle()
     load_data()
 
     while True:
