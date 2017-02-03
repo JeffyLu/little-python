@@ -1,73 +1,28 @@
 #coding:utf-8
 
-from string import printable
-import pickle
 import os
-import base64
+import hashlib
+import pickle
+from Crypto.Cipher import AES
+from binascii import b2a_hex, a2b_hex
 
 
 DATA = {}
-CHAR_TABLE = printable
-data_name = 'DATA.dat'
+FILE_NAME= 'DATA.dat'
+
 skip_null = lambda new, old : new if new else old
-bs_encode = lambda string : base64.encodestring(string.encode()).decode()
-bs_decode = lambda string : base64.decodestring(string.encode()).decode()
-encryption_match = lambda arg, func : [CHAR_TABLE.index(i) for i in func(arg)]
-decryption_match = lambda arg, func : func("".join([CHAR_TABLE[i] for i in arg]))
+padding = lambda text : text + ('\0' * (16-(len(text.encode())%16)))
+encrypt = None
+decrypt = None
 
-def shuffle():
-    global CHAR_TABLE
+def md5(string):
+    m = hashlib.md5()
     try:
-        security_code = [CHAR_TABLE.index(i)/100 for i in input("security code:")]
-    except:
+        m.update(string.encode())
+    except TypeError:
+        print('type error!')
         return False
-    CHAR_TABLE = list(CHAR_TABLE)
-    for i in reversed(range(1, len(CHAR_TABLE))):
-        for pos in security_code:
-            j = int((i+1) * pos)
-            CHAR_TABLE[i], CHAR_TABLE[j] = CHAR_TABLE[j], CHAR_TABLE[i]
-    CHAR_TABLE = ''.join(CHAR_TABLE)
-
-def load_data():
-    global DATA
-    if os.path.isfile(data_name):
-        with open(data_name, 'rb') as f:
-            try:
-                DATA = pickle.load(f)
-            except EOFError:
-                print("file error!")
-            except:
-                print("load error!")
-
-def save_data():
-    if os.path.isfile(data_name):
-        os.rename(data_name, data_name+'.bak')
-    with open(data_name, 'wb') as f:
-        pickle.dump(DATA, f)
-
-def print_data(account, data):
-    print("{0}\n{1}:\n\t{2[0]}\n\t{2[1]}\n\t{2[2]}\n{0}".format(
-        '*'*60, account, data))
-
-def encryption(*args):
-    try:
-        return pickle.dumps([encryption_match(i, bs_encode) for i in args])
-    except ValueError:
-        print("invalid username or password!")
-        return False
-    except:
-        print("faild!")
-        return False
-
-def decryption(account):
-    try:
-        return [decryption_match(i, bs_decode) for i in pickle.loads(account)]
-    except ValueError:
-        print("invalid username or password!")
-        return False
-    except:
-        print("faild!")
-        return False
+    return m.hexdigest()
 
 def add():
     global DATA
@@ -81,33 +36,15 @@ def add():
     print_data(account, (user, pwd, notes))
     confirm = input("(y) to confirm, else to cancel.")
     if confirm.upper() == 'Y':
-        data = encryption(user, pwd, notes)
-        if data:
-            DATA[account] = data
-            print("successfully added!")
-
-def delete():
-    global DATA
-    account = input("account:")
-    if account in DATA:
-        data = decryption(DATA[account])
-        if not data:
-            return False
-        print_data(account, data)
-        confirm = input("(y) to confirm, else to cancel.")
-        if confirm.upper() == 'Y':
-            DATA.pop(account)
-            print("successfully deleted!")
-    else:
-        print("account does not exist!")
+        data = [encrypt(user), encrypt(pwd), encrypt(notes)]
+        DATA[account] = data
+        print("successfully added!")
 
 def change():
     global DATA
     account = input("account:")
     if account in DATA:
-        data = decryption(DATA[account])
-        if not data:
-            return False
+        data = [decrypt(i) for i in DATA[account]]
         print_data(account, data)
         user = input("new username:")
         pwd = input("new password:")
@@ -116,10 +53,21 @@ def change():
         print_data(account, new_data)
         confirm = input("(y) to confirm, else to cancel.")
         if confirm.upper() == 'Y':
-            new_data = encryption(new_data[0], new_data[1], new_data[2])
-            if new_data:
-                DATA[account] = new_data
-                print("successfully changed!")
+            DATA[account] = [encrypt(i) for i in new_data]
+            print("successfully changed!")
+    else:
+        print("account does not exist!")
+
+def delete():
+    global DATA
+    account = input("account:")
+    if account in DATA:
+        data = [decrypt(i) for i in DATA[account]]
+        print_data(account, data)
+        confirm = input("(y) to confirm, else to cancel.")
+        if confirm.upper() == 'Y':
+            DATA.pop(account)
+            print("successfully deleted!")
     else:
         print("account does not exist!")
 
@@ -131,16 +79,43 @@ def search():
         items = [(k, v) for k, v in DATA.items() if account in k]
     if items:
         for item in items:
-            data = decryption(item[1])
-            if data:
-                print_data(item[0], data)
+            data = [decrypt(i) for i in item[1]]
+            print_data(item[0], data)
     else:
         print("account does not exist!")
+
+def save_data():
+    if os.path.isfile(FILE_NAME):
+        os.rename(FILE_NAME, FILE_NAME+'.bak')
+    with open(FILE_NAME, 'wb') as f:
+        pickle.dump(DATA, f)
+
+def load_data():
+    global DATA, encrypt, decrypt
+    key = md5(input('security code:'))
+    iv = key[8:24]
+    encrypt = lambda text : b2a_hex(
+        AES.new(key, AES.MODE_CBC, iv).encrypt(padding(text)))
+    decrypt = lambda text : AES.new(
+        key, AES.MODE_CBC, iv).decrypt(a2b_hex(text)).decode().rstrip('\0')
+    if os.path.isfile(FILE_NAME):
+        with open(FILE_NAME, 'rb') as f:
+            try:
+                DATA = pickle.load(f)
+            except pickle.UnpicklingError:
+                print('file error!')
+                return False
+            except:
+                print('loading error!')
+                return False
+
+def print_data(account, data):
+    print("{0}\n{1}:\n\t{2[0]}\n\t{2[1]}\n\t{2[2]}\n{0}".format(
+        '*'*60, account, data))
 
 
 if __name__ == '__main__':
 
-    shuffle()
     load_data()
 
     while True:
