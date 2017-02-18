@@ -1,0 +1,6 @@
+# 编码utf-8
+# 存储格式：帐号, 用户名, 密码, 备注
+# 以", "分隔
+# 例：
+# google, google@gmail.com, testgmail, for google
+

@@ -1,6 +1,7 @@
 #coding:utf-8
 
 import os
+import re
 import hashlib
 import pickle
 from Crypto.Cipher import AES
@@ -28,7 +29,7 @@ def add():
     global DATA
     account = input("account:")
     if account in DATA:
-        print("account already exists!")
+        print("{} already exists!".format(account))
         return False
     user = input("username:")
     pwd = input("password:")
@@ -36,7 +37,7 @@ def add():
     print_data(account, (user, pwd, notes))
     confirm = input("(y) to confirm, else to cancel.")
     if confirm.upper() == 'Y':
-        data = [encrypt(user), encrypt(pwd), encrypt(notes)]
+        data = [encrypt(i) for i in (user, pwd, notes)]
         DATA[account] = data
         print("successfully added!")
 
@@ -56,7 +57,7 @@ def change():
             DATA[account] = [encrypt(i) for i in new_data]
             print("successfully changed!")
     else:
-        print("account does not exist!")
+        print("{} does not exist!".format(account))
 
 def delete():
     global DATA
@@ -69,7 +70,7 @@ def delete():
             DATA.pop(account)
             print("successfully deleted!")
     else:
-        print("account does not exist!")
+        print("{} does not exist!".format(account))
 
 def search():
     account = input("account:")
@@ -82,7 +83,26 @@ def search():
             data = [decrypt(i) for i in item[1]]
             print_data(item[0], data)
     else:
-        print("account does not exist!")
+        print("{} does not exist!".format(account))
+
+def import_data():
+    global DATA
+    with open('source.txt', 'r', encoding = 'utf-8', errors = 'ignore') as f:
+        for line in f:
+            if line.startswith('#') or not line.strip():
+                continue
+            try:
+                a, u, p, n = re.findall(
+                    r'(.*?), (.*?), (.*?), (.*)', line.strip())[0]
+                if a in DATA:
+                    print('{} already exists!'.format(a))
+                    continue
+                data = [encrypt(i) for i in (u, p, n)]
+                DATA[a] = data
+            except:
+                print('error:{}...'.format(line[:20]))
+                continue
+            print_data(a, (u, p, n))
 
 def save_data():
     if os.path.isfile(FILE_NAME):
@@ -131,6 +151,9 @@ if __name__ == '__main__':
             save_data()
         elif op == "s":
             search()
+        elif op == "i":
+            import_data()
+            save_data()
         elif op == "q":
             break
         else:
