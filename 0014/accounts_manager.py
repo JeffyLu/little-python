@@ -93,7 +93,7 @@ def import_data():
                 continue
             try:
                 a, u, p, n = re.findall(
-                    r'(.*?), (.*?), (.*?), (.*)', line.strip())[0]
+                    r'(.*?), (.*?), (.*?), (.*)', line.strip('\n'))[0]
                 if a in DATA:
                     print('{} already exists!'.format(a))
                     continue
