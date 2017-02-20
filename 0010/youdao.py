@@ -8,7 +8,9 @@ from urllib.parse import urlencode
 import json
 
 class Youdao():
-    def __init__(self, word):
+
+    def __init__(self):
+        self.url = r'http://fanyi.youdao.com/openapi.do?'
         self.explain = {
             'translation' : None,
             'phonetic' : None,
@@ -18,27 +20,15 @@ class Youdao():
             'web' : None,
         }
         self.postdata = {
-            'keyfrom' : 'your webfrom',
+            'keyfrom' : 'your keyfrom',
             'key' : 'your key',
             'type' : 'data',
             'doctype' : 'json',
             'version' : '1.1',
-            'q' : word,
+            'q' : None,
         }
-        self.postdata = urlencode(self.postdata).encode()
-        self.url = r'http://fanyi.youdao.com/openapi.do?'
 
-    @property
-    def get_data(self):
-        data = urlopen(self.url, self.postdata).read()
-        data = json.loads(data.decode('utf-8'))
-        print(data)
-        if data['errorCode']:
-            print('error!')
-            return
-        return data
-
-    def results(self, data):
+    def parser(self, data):
         if 'translation' in data:
             self.explain['translation'] = data['translation']
 
@@ -72,14 +62,23 @@ class Youdao():
                     print(i, end = '; ')
                 print()
 
+    def main(self, word):
+        self.postdata['q'] = word
+        response = urlopen(self.url, urlencode(self.postdata).encode()).read()
+        data = json.loads(response.decode('utf-8'))
+        if data['errorCode']:
+            print('error!')
+            return False
+        self.parser(data)
 
 if __name__ == '__main__':
+
+    app = Youdao()
     while(True):
         try:
             word = input("\n输入翻译内容(';'退出):\n\n")
-            if word.endswith(';'):
+            if word.endswith(';') or word.endswith('；'):
                 break
-            y = Youdao(word)
-            y.results(y.get_data)
+            app.main(word)
         except:
             break
