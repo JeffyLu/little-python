@@ -1,0 +1,44 @@
+{% load static %}
+<html>
+
+<head>
+<title>{% block title %}{% endblock %}</title>
+</head>
+
+<body>
+<div style="margin:60px;">
+
+<div>
+  <div style="text-align:center;">
+    <h1>To Do List</h1>
+  </div>
+
+<div style="float:left; width:80%; margin-top:60px;">
+<form method="post">
+  {% csrf_token %}
+  <input style="width:65%; font-size:12; height:25;" type="text" placeholder="input a new item..." name="item"
+    maxlength="200" required />
+  <input style="margin-left:20px; font-size:12; height:25;" type="submit" title="add a new item." name="add" value="ADD" />
+</form>
+</div>
+
+
+
+  <div style="float:right; width:20%; text-align:right; margin-top:35px;">
+    <h5 style="font-size:1.0em; font-style:italic;">Welcome {{ user.username }}. </h5>
+  </div>
+</div>
+
+
+<div style="margin-top:160px;">
+  {% block body %}{% endblock %}
+</div>
+
+<div style="margin-top:100px; text-align:center;">
+  <p>Copyright © 2016.<a href="https://jeffylu.github.io">JeffyLu</a> All rights reserved.</p>
+</div>
+
+</div>
+</body>
+
+</html>
