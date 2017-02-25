@@ -87,6 +87,10 @@ def search():
 
 def import_data():
     global DATA
+    if not os.path.isfile('source.txt'):
+        print("source.txt not found!")
+        return False
+
     with open('source.txt', 'r', encoding = 'utf-8', errors = 'ignore') as f:
         for line in f:
             if line.startswith('#') or not line.strip():
@@ -103,6 +107,13 @@ def import_data():
                 print('error:{}...'.format(line[:20]))
                 continue
             print_data(a, (u, p, n))
+
+def export_data():
+    with open('output.txt', 'w') as f:
+        for k, v in DATA.items():
+            f.write('{0}, {1[0]}, {1[1]}, {1[2]}\n'.format(
+                k, list(map(decrypt, v))))
+    print('saved to output.txt!')
 
 def save_data():
     if os.path.isfile(FILE_NAME):
@@ -134,9 +145,21 @@ def print_data(account, data):
         '*'*60, account, data))
 
 
+def menu():
+    print("*"*23)
+    print("*    'a' to add       *")
+    print("*    'c' to change    *")
+    print("*    'd' to delete    *")
+    print("*    'e' to export    *")
+    print("*    'i' to import    *")
+    print("*    's' to search    *")
+    print("*    'q' to quit      *")
+    print("*"*23)
+
 if __name__ == '__main__':
 
     load_data()
+    menu()
 
     while True:
         op = input("input your choice:")
@@ -154,6 +177,8 @@ if __name__ == '__main__':
         elif op == "i":
             import_data()
             save_data()
+        elif op == "e":
+            export_data()
         elif op == "q":
             break
         else:
