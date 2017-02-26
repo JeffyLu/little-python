@@ -3,13 +3,15 @@
 import urllib.request
 import urllib.parse
 import re
+import webbrowser
 import http.cookiejar
+import os
 
 #url
-url = "http://jwgl.xxxx.edu.cn/"
+url = "http://jwgl.fjnu.edu.cn/"
 login_url = url + "default2.aspx"
 chkcode_url = url + "CheckCode.aspx"
-grade_url = url + "xscjcx_dq.aspx?"
+grade_url = url + "xscjcx.aspx?"
 
 #cookie
 cj = http.cookiejar.CookieJar()
@@ -36,9 +38,12 @@ class GradeSpyder:
     @property
     def __get_check_code(self):
 
+        chk_dir = os.path.dirname(os.path.abspath(__file__)) + '/CheckCode.aspx'
+        print('check code path:', chk_dir)
         response = urllib.request.urlopen(chkcode_url)
-        with open('CheckCode.aspx', 'wb') as f:
+        with open(chk_dir, 'wb') as f:
             f.write(response.read())
+        webbrowser.open(chk_dir)
         check_code = input("输入验证码:")
         for c in cj:
             self.__cookie = c.name + "=" + c.value
@@ -53,6 +58,9 @@ class GradeSpyder:
         viewstate = self.__get_viewstate(content)
         self.__stuid = input('输入学号:')
         self.__password = input('输入密码:')
+        if not self.__stuid:
+            self.__stuid = '105032014029'
+            self.__password = '214121.a'
         check_code = self.__get_check_code
         identity = "学生"
 
@@ -76,7 +84,7 @@ class GradeSpyder:
         data = {
             'xh' : self.__stuid,
             'xm' : self.__name,
-            'gnmkdm' : 'N121617',
+            'gnmkdm' : 'N121618',
         }
         url = grade_url + urllib.parse.urlencode(data)
 
@@ -93,9 +101,10 @@ class GradeSpyder:
             '__EVENTTARGET' : '',
             '__EVENTARGUMENT' : '',
             '__VIEWSTATE' : self.__get_viewstate(content),
-            'ddlxn' : input('输入学年, 如(2016-2017):'),
-            'ddlxq' : input('输入学期, 如(1):'),
-            'btnCx' : ' 查  询 ',
+            'ddlXN' : input('输入学年, 如(2016-2017):'),
+            'ddlXQ' : input('输入学期, 如(1):'),
+            'ddl_kcxz' : '',
+            'btn_xq' : '学期成绩',
         }
 
         return (urllib.parse.urlencode(data).encode(), url)
@@ -108,10 +117,10 @@ class GradeSpyder:
             "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
             "User-Agent" :
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML,like Gecko) Chrome/53.0.2785.116 Safari/537.36",
-            "Referer" : "http://jwgl.xxxx.edu.cn/xs_main.aspx?xh=" + self.__stuid,
+            "Referer" : "http://jwgl.fjnu.edu.cn/xs_main.aspx?xh=" + self.__stuid,
             "Connection" : "keep-alive",
             "Cookie" : self.__cookie,
-            "Host" : "jwgl.xxxx.edu.cn",
+            "Host" : "jwgl.fjnu.edu.cn",
         }
 
         return headers
@@ -147,6 +156,7 @@ class GradeSpyder:
     def get_grade(self):
 
         data, url = self.__get_grade_post_data_and_url
+        #print(data, url, self.__get_headers)
         try:
             request = urllib.request.Request(
                 url,
@@ -163,12 +173,14 @@ class GradeSpyder:
 
     def __analyze_info(self, content):
 
+        #print(content)
         content = content.replace('&nbsp;', '-')
-        title = re.findall(r'<td colspan="3".*>(.*?)</td>', content)
-        department = re.findall(r'<td>(学院.*?)</td>', content)
-        _class = re.findall(r'<td>(行政班.*?)</td>', content)
-        major = re.findall(r'<td colspan="2">(专业.*?)</td>', content)
-        grade_pattern = '<td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td>'
+        content = re.sub('<a .*?>(?P<t>.*?)</a>', lambda c: c.group('t'), content)
+        title = re.findall(r'"lbl_bt">.*>(.*?)</font>', content)
+        department = re.findall(r'"lbl_xy">(学院.*?)</span>', content)
+        _class = re.findall(r'"lbl_xzb">(.*?)</span>', content)
+        major = re.findall(r'"lbl_zyfx">(专业.*?)</span>', content)
+        grade_pattern = '<td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td>'
         grade = re.findall(grade_pattern, content)
         print(department[0])
         print(_class[0])
@@ -177,7 +189,7 @@ class GradeSpyder:
         print('\n' + '*-'*20 + title[0] + '-*'*20 + '\n')
         for l in grade:
             print('%-22s\t%-8s\t%-8s\t%-8s\t%-8s\t%-8s' %
-                  (l[3][:9], l[6], l[7], l[8], l[9], l[10])
+                  (l[3][:9], l[6], l[7].strip(), l[8], l[10], l[11])
                  )
         o = input('\n*输入“f”查看完整信息:\n')
         if o == 'f':
