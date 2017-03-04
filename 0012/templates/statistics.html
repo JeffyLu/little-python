@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}数据统计{% endblock %}
+{% block extracontain %}
+<div class="video">
+	<div class="container"> 
+	    <p><h1>站点数据</h1></p>
+	    
+		<div class="col-md-6 video-left">
+			<p style="margin-bottom: 140px;">
+			    <h4>我的IP:{{ ip }}</h4>
+			    <h4>我的记录:{{ items }}条</h4>
+			</p>
+		</div> 
+		<div class="col-md-6 video-right"> 
+		    <h3>我的BMI走势</h3>
+        <iframe src="{% static 'statistics' %}/{{ip}}/my.jpg"></iframe>
+		</div>
+
+		<div class="col-md-6 video-left">
+			<p style="margin-bottom: 180px;">
+			    <h4><table>
+			    
+			        <tr>
+			            <td>年龄段&nbsp&nbsp&nbsp&nbsp</td><td>记录(条)&nbsp&nbsp&nbsp&nbsp</td><td>BMI(平均)&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td>
+			            <td>年龄段&nbsp&nbsp&nbsp&nbsp</td><td>记录(条)&nbsp&nbsp&nbsp&nbsp</td><td>BMI(平均)</td>
+			        </tr>
+			        <tr>
+			            <td>{{ age_bmi_count.0.0 }}</td><td>{{age_bmi_count.0.2}}</td><td>{{age_bmi_count.0.1}}</td>
+			            <td>{{ age_bmi_count.8.0 }}</td><td>{{age_bmi_count.8.2}}</td><td>{{age_bmi_count.8.1}}</td>
+			        </tr>
+			        <tr>
+			            <td>{{ age_bmi_count.1.0 }}</td><td>{{age_bmi_count.1.2}}</td><td>{{age_bmi_count.1.1}}&nbsp&nbsp</td>
+			            <td>{{ age_bmi_count.9.0 }}</td><td>{{age_bmi_count.9.2}}</td><td>{{age_bmi_count.9.1}}</td>
+			        </tr>
+			        <tr>
+			            <td>{{ age_bmi_count.2.0 }}</td><td>{{age_bmi_count.2.2}}</td><td>{{age_bmi_count.2.1}}&nbsp&nbsp</td>
+			            <td>{{ age_bmi_count.10.0 }}</td><td>{{age_bmi_count.10.2}}</td><td>{{age_bmi_count.10.1}}</td>
+			        </tr>
+			        <tr>
+			            <td>{{ age_bmi_count.3.0 }}</td><td>{{age_bmi_count.3.2}}</td><td>{{age_bmi_count.3.1}}&nbsp&nbsp</td>
+			            <td>{{ age_bmi_count.11.0 }}</td><td>{{age_bmi_count.11.2}}</td><td>{{age_bmi_count.11.1}}</td>
+			        </tr>
+			        <tr>
+			            <td>{{ age_bmi_count.4.0 }}</td><td>{{age_bmi_count.4.2}}</td><td>{{age_bmi_count.4.1}}&nbsp&nbsp</td>
+			            <td>{{ age_bmi_count.12.0 }}</td><td>{{age_bmi_count.12.2}}</td><td>{{age_bmi_count.12.1}}</td>
+			        </tr>
+			        <tr>
+			            <td>{{ age_bmi_count.5.0 }}</td><td>{{age_bmi_count.5.2}}</td><td>{{age_bmi_count.5.1}}&nbsp&nbsp</td>
+			            <td>{{ age_bmi_count.13.0 }}</td><td>{{age_bmi_count.13.2}}</td><td>{{age_bmi_count.13.1}}</td>
+			        </tr>
+			        <tr>
+			            <td>{{ age_bmi_count.6.0 }}</td><td>{{age_bmi_count.6.2}}</td><td>{{age_bmi_count.6.1}}&nbsp&nbsp</td>
+			            <td>{{ age_bmi_count.14.0 }}</td><td>{{age_bmi_count.14.2}}</td><td>{{age_bmi_count.14.1}}</td>
+			        </tr>
+			        <tr>
+			            <td>{{ age_bmi_count.7.0 }}</td><td>{{age_bmi_count.7.2}}</td><td>{{age_bmi_count.7.1}}&nbsp&nbsp</td>
+			        </tr>
+
+			    </table></h4>
+			</p>
+		</div> 
+		<div class="col-md-6 video-right"> 
+		    <h3 style="margin-top: 60px;">各年龄段BMI平均值</h3>
+			<iframe src="{% static 'statistics/all0.jpg' %}"></iframe>
+		</div>
+
+		<div class="col-md-6 video-left">
+			<p style="margin-bottom: 180px;">
+			    <h4>来自{{ ip_count }}个IP的{{ items_count }}条记录</h4>
+            </p>
+		</div> 
+		<div class="col-md-6 video-right"> 
+		    <h3 style="margin-top: 60px;">BMI等级分布情况</h3>
+			<iframe src="{% static 'statistics/all1.jpg' %}"></iframe>
+		</div>
+		
+	</div> 
+</div>
+{% endblock %}

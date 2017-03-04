@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}健康之家{% endblock %}
+{% block extracontain%}
+<div class="video">
+    <div class="container">
+        <p><h1>健康社区</h1></p>
+        <div class="col-md-6 video-left">
+            <h3><a href="http://eat.51ttyy.com" > 天天饮食网 </a></h3>
+            <iframe src="{% static 'health_home/1.png' %}" ></iframe>
+        </div>
+		<div class="col-md-6 video-right"> 
+		    <h3><a href="http://www.gotokeep.com" > keep健身网 </a></h3>
+			<iframe src="{% static 'health_home/2.png' %}"></iframe>
+		</div>
+		<div class="col-md-6 video-left">
+		    <h3><a href="http://www.health.com" > Health健康网 </a></h3>
+            <iframe src="{% static 'health_home/3.png' %}"></iframe>
+        </div>
+		<div class="col-md-6 video-right"> 
+		    <h3><a href="http://www.yujia.com" > 瑜伽网 </a></h3>
+			<iframe src="{% static 'health_home/4.png' %}"></iframe>
+		</div>
+	</div> 
+        
+	</div>
+</div>
+{% endblock %}

@@ -1,0 +1,6 @@
+*~
+*.pyc
+*.sqlite3
+*.swp
+__pycache__/
+commonstatic/statistics/

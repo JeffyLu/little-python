@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}指数计算{% endblock %}
+{% block extracontain%}
+<div class="video">
+    <div class="container">
+        <p><h1>计算BMI</h1></p>
+        <div class="col-md-6 video-left">
+            <h2>用户{{ ip }}的最近记录:</h2>
+            {% if history_data %}
+                {% for data in history_data %}
+                    <p1>
+                        <h4>{{ data.date }}&nbsp&nbsp&nbsp&nbspBMI:{{ data.get_bmi }}&nbsp&nbsp&nbsp&nbsp等级:{{ data.get_rank }}</h4>
+                        <table>
+                            <tr><td>年龄:{{ data.age }}</td></tr>
+                            <tr><td>性别:{{ data.gender }}</td></tr>
+                            <tr><td>身高:{{ data.height }}</td></tr>
+                            <tr><td>体重:{{ data.weight }}</td></tr>
+                        </table>
+                    </p1>
+                {% endfor%}
+            {% else %}
+                <p><h4>无记录！</h4></p>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-6 video-right"> 
+
+            <h2 style="margin-left: 200px;">请填写以下数据：</h2>
+            <p style="color: #a92929;">
+                {% if form.errors %}
+                    请修改下列错误项：
+                {% endif %}
+            </p>
+            
+            <form action={% url 'BMI' %} method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <input style="margin-left: 350px; margin-top: 20px;" type="submit" title="计算BMI" value="计&nbsp&nbsp&nbsp&nbsp算" />
+            </form>
+            
+            <h2 style="margin-left: 200px; margin-top: 60px;">BMI指数标准：</h2>
+            <h4 style="margin-left: 200px;"> 
+                <table>
+                    <tr><td>偏瘦 < 18.5 </td></tr>
+                    <tr><td>18.5 <= 正常 <= 24.9</td></tr>
+                    <tr><td>25.0 <= 偏胖 <= 29.9</td></tr>
+                    <tr><td>30.0 <= 肥胖 <= 34.9</td></tr>
+                    <tr><td>35.0 <= 重度肥胖 <= 39.9</td></tr>
+                    <tr><td>39.9 < 极度肥胖 </td></tr>
+                </table>
+            </h4>
+            
+        </div>
+    </div>
+</div>
+{% endblock %}
