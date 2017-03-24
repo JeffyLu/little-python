@@ -33,4 +33,4 @@
 
 * * *
 
-*** java版 : [Log.java](https://github.com/JeffyLu/Java/tree/master/0004)***
+***[java版](https://github.com/JeffyLu/useless-but-powerful/tree/master/Java/%E6%97%A5%E5%BF%97%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C)***
