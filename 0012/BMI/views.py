@@ -40,8 +40,8 @@ def view_of_BMI(request):
                 ip = ip,
                 age = form.clean_age(),
                 gender = form.cleaned_data['gender'],
-                height = form.clean_height(),
-                weight = form.clean_weight(),
+                height = form.cleaned_data['height'],
+                weight = form.cleaned_data['weight'],
             )
             condition.acquire()
             stat_thread.ip = ip
