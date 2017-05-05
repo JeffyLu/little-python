@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from BMI.models import Ip, Info
+from django.db import transaction
 import random
 
 #主页视图
@@ -8,6 +9,7 @@ def index(request):
     return render(request, 'index.html')
 
 #随机添加数据
+@transaction.atomic
 def add_items(request):
 
     gender_choice = ['男', '女']

@@ -1,4 +1,4 @@
-# little python project，一些简单的python小程序。
+# little python projects, 一些小的python项目.
 ###### [Personal Page](https://jeffylu.github.io/) 个人主页
 
 - - -
